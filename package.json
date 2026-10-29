@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "postinstall": "node scripts/copy-zxing-wasm.mjs"
   },
   "dependencies": {
     "cheerio": "^1.2.0",
@@ -17,7 +18,8 @@
     "next": "^16.4.3",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "zustand": "^5.0.16"
+    "zustand": "^5.0.16",
+    "zxing-wasm": "3.1.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",

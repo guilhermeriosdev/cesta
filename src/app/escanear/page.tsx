@@ -195,7 +195,8 @@ export default function ScanPage() {
       {phase.kind === "error" && (
         <Panel>
           <Message icon={<TriangleAlert size={30} />} title="Não deu para ler a nota" text={phase.message} tone="error" />
-          <div className="mt-6 space-y-2">
+          <p className="mt-3 truncate px-4 text-center text-[12px] text-label-3">QR lido: {hostOf(phase.url)}</p>
+          <div className="mt-5 space-y-2">
             <Button onClick={() => lookup(phase.url)}>Tentar de novo</Button>
             <Button variant="secondary" onClick={reset}>
               Escanear outra
@@ -215,6 +216,14 @@ export default function ScanPage() {
     </div>
   );
 }
+
+const hostOf = (url: string) => {
+  try {
+    return new URL(url.trim()).hostname;
+  } catch {
+    return url.slice(0, 60);
+  }
+};
 
 function Panel({ children }: { children: ReactNode }) {
   return (

@@ -1,5 +1,5 @@
 // Service worker simples: deixa o app abrir sem internet (os dados já ficam no aparelho).
-const CACHE = "cesta-v1";
+const CACHE = "cesta-v2";
 const SHELL = ["/", "/produtos", "/comparar", "/lista", "/notas", "/ajustes", "/escanear"];
 
 self.addEventListener("install", (event) => {
