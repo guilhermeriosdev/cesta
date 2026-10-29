@@ -112,6 +112,45 @@ describe("textos", () => {
   });
 });
 
+describe("categorias com abreviações de uma nota real (Assaí)", () => {
+  const expected: Record<string, string[]> = {
+    hortifruti: ["ALHO A GRANEL kg", "CEBOLA NAC kg", "UVA BRANCA BJ 500G"],
+    laticinios: [
+      "CR LEITE ITALAC 200G", "LTE DESN PARMALAT 1L", "MARG QUALY 1kg C/S", "QJ MUSS VALE ITA FT",
+      "QJ PROC SUPREMO 400G", "REQ POCOS 400G TRAD", "L PO ITALAC INT 400G",
+    ],
+    mercearia: [
+      "DOCE LTE ITAMBE 350G", "ARROZ SOLITO 1kg", "ATUM P GC 500G", "FEIJ CAR CAMIL 1kg", "MAC DB 500G SPAG",
+      "MAIONESE HEMMER 930G", "MB APTI 400G CHOC", "MB APTI 400G COCO", "MILHO PIP CBELO 2kg", "AZ OLIV SERRA 500ML",
+      "EXT FUGINI 190G SACH", "F T ORIG GLOBO 1kg", "FLOCAO MARATA 500G", "M LAC MOCOCA TP 395G", "PALHA TOSTY 400G",
+      "FILTRO AROMA MAX 103",
+    ],
+    padaria: ["PAO FRANC COST LAVOS0", "PAO QJO TRAD CLAV kg", "PAO HAMB WICKBOLD", "PAO DE ALHO SANTA MASSA"],
+    limpeza: ["DET YPE 500ML COCO", "ESPONJA EXTREMA L4P3", "PANO ABS FLASH C/25", "ESP ESFR NAO RISC/3", "TOALHA ECONOBOM 2RL"],
+    higiene: [
+      "AXE 152ML URBAN", "CD COLG PRO A 90G OR", "CR DOVE 500G CACHOS", "CR SENSODYNE 90G EXT", "DEO AXE 152ML MUSK",
+      "PH NEVE FT LV12 PG11", "SERUM TRES 110ML MOL",
+    ],
+    bebidas: ["REF CLIGHT 8G ABACAX", "REF CLIGHT 8G LARANJ", "REF CLIGHT 8G PINK L", "TANG LARANJA 25G"],
+  };
+
+  for (const [category, names] of Object.entries(expected)) {
+    it(`reconhece ${category}`, () => {
+      expect(names.map((n) => [n, categorize(n)])).toEqual(names.map((n) => [n, category]));
+    });
+  }
+
+  it("não confunde palavras parecidas", () => {
+    expect(categorize("TANGERINA PONKAN KG")).toBe("hortifruti");
+    expect(categorize("LTE COND MOCOCA 395G")).toBe("mercearia");
+    expect(categorize("COND SEDA CERAMIDAS")).toBe("higiene");
+    expect(categorize("SAB PO OMO 1,6KG")).toBe("limpeza");
+    expect(categorize("SAB DOVE ORIGINAL 90G")).toBe("higiene");
+    expect(categorize("BAT PALHA YOKI 120G")).toBe("mercearia");
+    expect(categorize("CAFE ESP PILAO 250G")).toBe("mercearia");
+  });
+});
+
 describe("dados de exemplo", () => {
   it("geram 6 meses de notas com produtos recorrentes", () => {
     const demo = generateDemoReceipts();
