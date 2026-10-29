@@ -1,6 +1,6 @@
 "use client";
 
-import { ChartColumn, House, ListChecks, Package, ScanLine } from "lucide-react";
+import { House, ListChecks, Package, ScanLine } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useStore } from "@/lib/store";
@@ -9,7 +9,6 @@ import { cn } from "./ui";
 const TABS = [
   { href: "/", label: "Início", icon: House, match: ["/", "/notas", "/ajustes"] },
   { href: "/produtos", label: "Produtos", icon: Package, match: ["/produtos"] },
-  { href: "/comparar", label: "Comparar", icon: ChartColumn, match: ["/comparar"] },
   { href: "/lista", label: "Lista", icon: ListChecks, match: ["/lista"] },
 ];
 

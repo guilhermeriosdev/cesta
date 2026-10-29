@@ -23,7 +23,6 @@ export default function manifest(): MetadataRoute.Manifest {
     shortcuts: [
       { name: "Escanear nota", short_name: "Escanear", url: "/escanear", icons: [{ src: "/icons/192.png", sizes: "192x192" }] },
       { name: "Lista de compras", short_name: "Lista", url: "/lista", icons: [{ src: "/icons/192.png", sizes: "192x192" }] },
-      { name: "Comparar meses", short_name: "Comparar", url: "/comparar", icons: [{ src: "/icons/192.png", sizes: "192x192" }] },
     ],
   };
 }

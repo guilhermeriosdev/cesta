@@ -8,10 +8,9 @@ e o que você sempre compra.
 
 | Tela | O que mostra |
 | --- | --- |
-| **Resumo** | Total do mês vs. mês anterior (no mês corrente, compara o mesmo período), barras dos últimos 6 meses, notas, "sua inflação", categorias, mais comprados, novidades |
-| **Produtos** | Todos os produtos com busca; abas *Top* (frequência/quantidade/gasto), *Novos* (comprados este mês e não no anterior) e *Sumiram* |
-| **Produto** | Gráfico do preço por compra, menor/média/maior, mês a mês, onde comprou mais barato; renomear, mudar categoria e **juntar** nomes diferentes do mesmo produto |
-| **Comparar** | Escolha dois meses: diferença total, inflação pessoal, por categoria e produto a produto (subiram, baixaram, novos, saíram) |
+| **Resumo** | Total do mês vs. mês anterior (no mês corrente, compara o mesmo período) e **o que mudou, em reais**: preço, quantidade, produtos novos e os que deixou de comprar — as linhas somam a diferença. Tocando numa linha, aparecem os produtos |
+| **Produtos** | Aba do mês: quantidade × preço de cada produto e quanto gastou a mais/a menos que no mês anterior (mais os que não comprou). Aba Todos: por frequência |
+| **Produto** | Gráfico do preço por compra, mês a mês (quantidade × preço), onde comprou mais barato; renomear, mudar categoria e **juntar** nomes diferentes do mesmo produto |
 | **Lista** | Lista de compras com check; aba *Sempre compro* gerada sozinha (produtos que aparecem em pelo menos metade dos meses) com quantidade sugerida |
 | **Escanear** | Câmera com leitura contínua, foto da galeria ou link colado; prévia da nota antes de salvar; bloqueia nota duplicada |
 | **Notas / Ajustes** | Histórico por mês, detalhe da nota, tema claro/escuro/automático, backup (exportar/importar), dados de exemplo |

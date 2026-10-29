@@ -15,6 +15,13 @@ export function money(n: number) {
   return brl.format(Number.isFinite(n) ? n : 0).replace(/ /g, " ");
 }
 
+/** "+R$ 12,30" / "−R$ 4,10" */
+export function signedMoney(n: number) {
+  const cents = Math.round(n * 100);
+  const sign = cents > 0 ? "+" : cents < 0 ? "−" : "";
+  return `${sign}${money(Math.abs(cents) / 100)}`;
+}
+
 /** "R$ 1.234,56" -> { symbol: "R$", int: "1.234", cents: ",56" } */
 export function moneyParts(n: number) {
   const s = money(n);

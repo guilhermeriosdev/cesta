@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { CATEGORIES, type CategoryId } from "@/lib/categories";
 import { dateTime, money, monthShort } from "@/lib/format";
 import { cn } from "./ui";
 
@@ -135,33 +134,6 @@ export function PriceLine({ points, height = 150 }: { points: { date: string; va
           {money(points[active].value)}
         </div>
       )}
-    </div>
-  );
-}
-
-/** Barra empilhada de categorias + legenda */
-export function CategoryBar({ data, limit = 4 }: { data: { category: CategoryId; spent: number }[]; limit?: number }) {
-  const total = data.reduce((s, d) => s + d.spent, 0) || 1;
-  return (
-    <div>
-      <div className="flex h-3 w-full gap-[3px] overflow-hidden rounded-full">
-        {data.map((d) => (
-          <div
-            key={d.category}
-            className="h-full first:rounded-l-full last:rounded-r-full"
-            style={{ width: `${(d.spent / total) * 100}%`, backgroundColor: CATEGORIES[d.category].color, minWidth: 3 }}
-          />
-        ))}
-      </div>
-      <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2">
-        {data.slice(0, limit).map((d) => (
-          <div key={d.category} className="flex min-w-0 items-center gap-2 text-[13px]">
-            <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: CATEGORIES[d.category].color }} />
-            <span className="truncate text-label-2">{CATEGORIES[d.category].label}</span>
-            <span className="ml-auto font-semibold tabular">{Math.round((d.spent / total) * 100)}%</span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }

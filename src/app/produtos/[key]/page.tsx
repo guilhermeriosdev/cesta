@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import { PriceLine } from "@/components/charts";
 import { Screen } from "@/components/Screen";
 import { Sheet } from "@/components/Sheet";
-import { BigMoney, Button, Card, CategoryIcon, Delta, Empty, IconTile, List, Row, SearchField, Section, WidgetLabel } from "@/components/ui";
+import { BigMoney, Button, Card, CategoryIcon, Delta, Empty, IconTile, List, Row, SearchField, Section } from "@/components/ui";
 import { avgPrice, storeStats, type Product } from "@/lib/analytics";
 import { CATEGORIES, CATEGORY_ORDER, categorize } from "@/lib/categories";
 import { formatQty, money, monthName, relativeDay, unitLabel } from "@/lib/format";
@@ -47,7 +47,6 @@ function ProductDetail({ product: p, products }: { product: Product; products: P
   const prices = p.purchases.map((x) => x.unitPrice);
   const min = Math.min(...prices);
   const max = Math.max(...prices);
-  const avg = p.totalSpent / Math.max(p.totalQty, 0.0001);
   const previous = p.purchases.length > 1 ? p.purchases[p.purchases.length - 2].unitPrice : null;
   const stores = useMemo(() => storeStats(p), [p]);
   const monthsDesc = Object.keys(p.months).sort().reverse();
@@ -84,33 +83,17 @@ function ProductDetail({ product: p, products }: { product: Product; products: P
             <PriceLine points={p.purchases.map((x) => ({ date: x.date, value: x.unitPrice }))} />
           </div>
         )}
+        <div className="mt-4 flex justify-between border-t border-sep pt-3 text-[13px] text-label-2">
+          <span>
+            {p.times}× em {monthsDesc.length} {monthsDesc.length === 1 ? "mês" : "meses"}
+          </span>
+          {p.purchases.length > 1 && (
+            <span className="tabular">
+              {money(min)} a {money(max)}
+            </span>
+          )}
+        </div>
       </Card>
-
-      <div className="mt-3 grid grid-cols-3 gap-3">
-        {[
-          { label: "Menor", value: money(min) },
-          { label: "Média", value: money(avg) },
-          { label: "Maior", value: money(max) },
-        ].map((s) => (
-          <Card key={s.label} className="px-3 py-3">
-            <div className="text-[12px] font-semibold text-label-2">{s.label}</div>
-            <div className="mt-1 text-[16px] font-bold tabular tracking-tight">{s.value}</div>
-          </Card>
-        ))}
-      </div>
-
-      <div className="mt-3 grid grid-cols-2 gap-3">
-        <Card>
-          <WidgetLabel>Total gasto</WidgetLabel>
-          <div className="mt-1 text-[20px] font-bold tabular tracking-tight">{money(p.totalSpent)}</div>
-        </Card>
-        <Card>
-          <WidgetLabel>Comprado</WidgetLabel>
-          <div className="mt-1 text-[20px] font-bold tabular tracking-tight">
-            {p.times}× <span className="text-[14px] font-semibold text-label-2">em {monthsDesc.length} {monthsDesc.length === 1 ? "mês" : "meses"}</span>
-          </div>
-        </Card>
-      </div>
 
       <Section title="Mês a mês">
         <List>
@@ -120,7 +103,7 @@ function ProductDetail({ product: p, products }: { product: Product; products: P
               <Row
                 key={m}
                 title={monthName(m)}
-                subtitle={`${formatQty(stat.qty, p.unit)} · ${money(avgPrice(stat))}/${unit}`}
+                subtitle={`${formatQty(stat.qty, p.unit)} × ${money(avgPrice(stat))}`}
                 value={money(stat.spent)}
               />
             );
@@ -128,8 +111,8 @@ function ProductDetail({ product: p, products }: { product: Product; products: P
         </List>
       </Section>
 
-      {stores.length > 0 && (
-        <Section title="Onde comprou" footer={stores.length > 1 ? `Mais barato em média: ${prettyStore(stores[0].store)}.` : undefined}>
+      {stores.length > 1 && (
+        <Section title="Onde comprou" footer={`Mais barato em média: ${prettyStore(stores[0].store)}.`}>
           <List>
             {stores.map((s, i) => (
               <Row
@@ -137,7 +120,7 @@ function ProductDetail({ product: p, products }: { product: Product; products: P
                 title={prettyStore(s.store)}
                 subtitle={`${s.times}× · última ${relativeDay(s.last)}`}
                 value={`${money(s.avg)}/${unit}`}
-                valueSub={stores.length > 1 && i === 0 ? <span className="font-semibold text-down">mais barato</span> : undefined}
+                valueSub={i === 0 ? <span className="font-semibold text-down">mais barato</span> : undefined}
               />
             ))}
           </List>

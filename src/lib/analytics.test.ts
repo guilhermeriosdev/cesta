@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  bucketRows,
   buildProducts,
-  compareMonths,
+  monthBreakdown,
   monthSummaries,
   monthsWithData,
-  personalInflation,
   recurringProducts,
 } from "./analytics";
 import { categorize } from "./categories";
@@ -38,19 +38,26 @@ describe("comparação entre meses", () => {
     expect(monthsWithData(receipts)).toEqual(["2026-10", "2026-09"]);
   });
 
-  it("classifica produtos novos, que saíram, subiram e baixaram", () => {
-    const rows = compareMonths(products, "2026-09", "2026-10");
-    const by = Object.fromEntries(rows.map((r) => [r.product.key, r]));
-    expect(by["LEITE UHT 1L"].status).toBe("up");
-    expect(by["LEITE UHT 1L"].priceChange).toBeCloseTo(0.25);
-    expect(by["CAFE 500G"].status).toBe("down");
-    expect(by["PANETONE 500G"].status).toBe("new");
-    expect(by["NESCAU 400G"].status).toBe("gone");
+  it("separa a diferença em preço, quantidade, novos e removidos — e a conta fecha", () => {
+    const b = monthBreakdown(receipts, products, "2026-09", "2026-10");
+    // Leite: 10 un, R$ 4 -> R$ 5 => preço +10. Café: 1 -> 2 un, R$ 20 -> R$ 19 => preço -2, quantidade +20
+    expect(b.price).toBeCloseTo(8);
+    expect(b.quantity).toBeCloseTo(20);
+    expect(b.added).toBeCloseTo(30); // panetone
+    expect(b.removed).toBeCloseTo(-10); // nescau
+    expect(b.other).toBeCloseTo(0);
+    expect(b.price + b.quantity + b.added + b.removed + b.other).toBeCloseTo(b.targetTotal - b.baseTotal);
+    // mesmos produtos com as quantidades de agora: 88 contra 80 => +10%
+    expect(b.priceRatio).toBeCloseTo(0.1);
+    expect(bucketRows(b, "price").map((x) => x.row.product.key)).toEqual(["LEITE UHT 1L", "CAFE 500G"]);
+    expect(bucketRows(b, "quantity").map((x) => x.row.product.key)).toEqual(["CAFE 500G"]);
   });
 
-  it("calcula a inflação pessoal com as quantidades do mês atual", () => {
-    // agora: 10*5 + 2*19 = 88 · antes: 10*4 + 2*20 = 80
-    expect(personalInflation(products, "2026-09", "2026-10")).toBeCloseTo(0.1);
+  it("compara só até o mesmo dia quando o mês está em andamento", () => {
+    const r = [...receipts, receipt("c", "2026-09-20T10:00:00", [["LEITE UHT 1L", 5, 4]])];
+    const b = monthBreakdown(r, buildProducts(r, noPrefs), "2026-09", "2026-10", 10);
+    expect(b.baseTotal).toBe(70);
+    expect(b.rows.find((x) => x.product.key === "LEITE UHT 1L")?.base?.qty).toBe(10);
   });
 
   it("monta a lista de sempre comprados", () => {

@@ -1,168 +1,118 @@
 "use client";
 
 import { Package } from "lucide-react";
-import { useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ProductRow } from "@/components/ProductRow";
 import { Screen } from "@/components/Screen";
-import { Chips, Delta, Empty, List, Pill, SearchField, Segmented } from "@/components/ui";
-import { avgPrice, topProducts, type Product, type TopSort } from "@/lib/analytics";
-import { formatQty, money, monthLower, relativeDay, shiftMonth, unitLabel } from "@/lib/format";
+import { Empty, List, MoneyChange, Pill, SearchField, Section, Segmented } from "@/components/ui";
+import { avgPrice, monthBreakdown, type Product } from "@/lib/analytics";
+import { currentMonth, formatQty, money, monthLower, monthName, shiftMonth, unitLabel } from "@/lib/format";
 import { normalizeText } from "@/lib/normalize";
 import { useData, useMonth } from "@/lib/store";
 
-type Tab = "todos" | "top" | "novos" | "sumiram";
-const TABS: { value: Tab; label: string }[] = [
-  { value: "todos", label: "Todos" },
-  { value: "top", label: "Top" },
-  { value: "novos", label: "Novos" },
-  { value: "sumiram", label: "Sumiram" },
-];
+type Tab = "mes" | "todos";
 
 export default function ProductsPage() {
-  return (
-    <Suspense>
-      <Products />
-    </Suspense>
-  );
-}
-
-function Products() {
-  const params = useSearchParams();
-  const initial = TABS.some((t) => t.value === params.get("aba")) ? (params.get("aba") as Tab) : "todos";
-  const [tab, setTab] = useState<Tab>(initial);
+  const [tab, setTab] = useState<Tab>("mes");
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<TopSort>("times");
-  const { products, months } = useData();
+  const { receipts, products, months } = useData();
   const [month] = useMonth(months);
   const prev = shiftMonth(month, -1);
+  const hasPrev = months.includes(prev);
+  const cutoff = month === currentMonth() ? new Date().getDate() : undefined;
 
-  const filtered = useMemo(() => {
-    const q = normalizeText(query);
-    if (!q) return products;
-    return products.filter((p) => normalizeText(`${p.name} ${p.sources.map((s) => s.name).join(" ")}`).includes(q));
-  }, [products, query]);
+  const breakdown = useMemo(
+    () => monthBreakdown(receipts, products, prev, month, cutoff),
+    [receipts, products, prev, month, cutoff],
+  );
 
-  const list = useMemo(() => {
-    switch (tab) {
-      case "todos":
-        return [...filtered].sort((a, b) => b.lastDate.localeCompare(a.lastDate));
-      case "top":
-        return topProducts(filtered, sort);
-      case "novos":
-        return filtered.filter((p) => p.months[month] && !p.months[prev]).sort((a, b) => b.months[month].spent - a.months[month].spent);
-      case "sumiram":
-        return filtered.filter((p) => p.months[prev] && !p.months[month]).sort((a, b) => b.months[prev].spent - a.months[prev].spent);
-    }
-  }, [filtered, tab, sort, month, prev]);
+  const q = normalizeText(query);
+  const matches = (p: Product) =>
+    !q || normalizeText(`${p.name} ${p.sources.map((s) => s.name).join(" ")}`).includes(q);
+
+  const bought = breakdown.rows
+    .filter((r) => r.target && matches(r.product))
+    .sort((a, b) => b.target!.spent - a.target!.spent);
+  const gone = hasPrev ? breakdown.rows.filter((r) => r.kind === "gone" && matches(r.product)) : [];
+  const all = products
+    .filter(matches)
+    .sort((a, b) => b.times - a.times || b.lastDate.localeCompare(a.lastDate));
 
   return (
     <Screen title="Produtos">
       <SearchField value={query} onChange={setQuery} placeholder="Buscar produto" />
-      <Segmented className="mt-3" value={tab} onChange={setTab} options={TABS} />
+      <Segmented
+        className="mt-3"
+        value={tab}
+        onChange={setTab}
+        options={[
+          { value: "mes", label: monthName(month) },
+          { value: "todos", label: "Todos" },
+        ]}
+      />
 
-      {tab === "top" && (
+      {tab === "mes" ? (
+        <>
+          {hasPrev && (
+            <p className="mt-4 px-1 text-[14px] leading-snug text-label-2">
+              Quantidade × preço. Ao lado, a diferença para {monthLower(prev)}
+              {cutoff ? ` (até dia ${cutoff})` : ""}.
+            </p>
+          )}
+          <div className="mt-3">
+            {bought.length === 0 ? (
+              <Empty icon={Package} title={query ? "Nada encontrado" : "Sem compras neste mês"} />
+            ) : (
+              <List>
+                {bought.map((r) => (
+                  <ProductRow
+                    key={r.product.key}
+                    product={r.product}
+                    subtitle={`${formatQty(r.target!.qty, r.product.unit)} × ${money(avgPrice(r.target!))}`}
+                    value={money(r.target!.spent)}
+                    valueSub={hasPrev ? r.kind === "new" ? <Pill tone="solid">novo</Pill> : <MoneyChange value={r.change} /> : undefined}
+                  />
+                ))}
+              </List>
+            )}
+          </div>
+
+          {gone.length > 0 && (
+            <Section title={<span className="text-[17px]">Não comprou em {monthLower(month)}</span>} className="mt-7">
+              <List>
+                {gone.map((r) => (
+                  <ProductRow
+                    key={r.product.key}
+                    product={r.product}
+                    subtitle={`em ${monthLower(prev)}: ${formatQty(r.base!.qty, r.product.unit)} × ${money(avgPrice(r.base!))}`}
+                    value={<span className="font-normal text-label-2">{money(r.base!.spent)}</span>}
+                  />
+                ))}
+              </List>
+            </Section>
+          )}
+        </>
+      ) : (
         <div className="mt-4">
-          <Chips
-            value={sort}
-            onChange={setSort}
-            options={[
-              { value: "times", label: "Frequência" },
-              { value: "qty", label: "Quantidade" },
-              { value: "spent", label: "Gasto" },
-            ]}
-          />
+          {all.length === 0 ? (
+            <Empty icon={Package} title="Nada encontrado" text="Tente outro nome." />
+          ) : (
+            <List>
+              {all.map((p) => {
+                const monthsCount = Object.keys(p.months).length;
+                return (
+                  <ProductRow
+                    key={p.key}
+                    product={p}
+                    subtitle={`${p.times}× · em ${monthsCount} ${monthsCount === 1 ? "mês" : "meses"}`}
+                    value={`${money(p.lastPrice)}/${unitLabel(p.unit)}`}
+                  />
+                );
+              })}
+            </List>
+          )}
         </div>
       )}
-
-      {(tab === "novos" || tab === "sumiram") && (
-        <p className="mt-4 px-1 text-[14px] leading-snug text-label-2">
-          {tab === "novos"
-            ? `Comprados em ${monthLower(month)}, mas não em ${monthLower(prev)}.`
-            : `Comprados em ${monthLower(prev)}, mas não em ${monthLower(month)}.`}
-        </p>
-      )}
-
-      <div className="mt-4">
-        {list.length === 0 ? (
-          <Empty
-            icon={Package}
-            title={query ? "Nada encontrado" : tab === "novos" ? "Nada novo" : tab === "sumiram" ? "Nada sumiu" : "Sem produtos"}
-            text={query ? "Tente outro nome." : "Escaneie mais notas para ver essa lista."}
-          />
-        ) : (
-          <List>
-            {list.map((p, i) => (
-              <Item key={p.key} product={p} tab={tab} sort={sort} rank={i + 1} month={month} prev={prev} />
-            ))}
-          </List>
-        )}
-      </div>
-      {list.length > 0 && (
-        <p className="mt-3 text-center text-[13px] text-label-3">
-          {list.length} {list.length === 1 ? "produto" : "produtos"}
-        </p>
-      )}
     </Screen>
-  );
-}
-
-function Item({
-  product: p,
-  tab,
-  sort,
-  rank,
-  month,
-  prev,
-}: {
-  product: Product;
-  tab: Tab;
-  sort: TopSort;
-  rank: number;
-  month: string;
-  prev: string;
-}) {
-  const unit = unitLabel(p.unit);
-
-  if (tab === "top") {
-    const value = sort === "spent" ? money(p.totalSpent) : sort === "qty" ? formatQty(p.totalQty, p.unit) : `${p.times}×`;
-    const monthsCount = Object.keys(p.months).length;
-    return (
-      <ProductRow
-        product={p}
-        leading={<span className="w-5 text-center text-[15px] font-bold text-label-3 tabular">{rank}</span>}
-        subtitle={`${p.times} ${p.times === 1 ? "compra" : "compras"} · em ${monthsCount} ${monthsCount === 1 ? "mês" : "meses"}`}
-        value={value}
-      />
-    );
-  }
-
-  if (tab === "novos") {
-    const m = p.months[month];
-    const firstTime = Object.keys(p.months).every((k) => k >= month);
-    return (
-      <ProductRow
-        product={p}
-        subtitle={`${formatQty(m.qty, p.unit)} · ${money(avgPrice(m))}/${unit}`}
-        value={money(m.spent)}
-        valueSub={firstTime ? <Pill tone="solid">1ª vez</Pill> : <Pill>voltou</Pill>}
-      />
-    );
-  }
-
-  if (tab === "sumiram") {
-    const m = p.months[prev];
-    return <ProductRow product={p} subtitle={`última compra: ${relativeDay(p.lastDate)}`} value={money(m.spent)} valueSub={<span className="text-label-2">{formatQty(m.qty, p.unit)}</span>} />;
-  }
-
-  const purchases = p.purchases;
-  const previous = purchases.length > 1 ? purchases[purchases.length - 2].unitPrice : null;
-  return (
-    <ProductRow
-      product={p}
-      subtitle={`${relativeDay(p.lastDate)} · ${p.times}× no total`}
-      value={`${money(p.lastPrice)}/${unit}`}
-      valueSub={previous ? <Delta value={p.lastPrice / previous - 1} className="text-[13px]" /> : undefined}
-    />
   );
 }

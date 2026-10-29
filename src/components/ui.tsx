@@ -22,7 +22,7 @@ import {
 import Link from "next/link";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { CATEGORIES, type CategoryId } from "@/lib/categories";
-import { moneyParts, percent } from "@/lib/format";
+import { moneyParts, percent, signedMoney } from "@/lib/format";
 
 export const cn = (...classes: (string | false | null | undefined)[]) => classes.filter(Boolean).join(" ");
 
@@ -260,38 +260,6 @@ export function Segmented<T extends string>({
   );
 }
 
-export function Chips<T extends string>({
-  value,
-  onChange,
-  options,
-}: {
-  value: T;
-  onChange: (v: T) => void;
-  options: { value: T; label: string; count?: number }[];
-}) {
-  return (
-    <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 py-0.5">
-      {options.map((o) => {
-        const active = o.value === value;
-        return (
-          <button
-            type="button"
-            key={o.value}
-            onClick={() => onChange(o.value)}
-            className={cn(
-              "pressable h-[34px] shrink-0 rounded-full px-4 text-[14px] font-semibold transition-colors",
-              active ? "bg-label text-bg" : "bg-card text-label shadow-[var(--shadow)]",
-            )}
-          >
-            {o.label}
-            {o.count != null && <span className={cn("ml-1.5 tabular", active ? "opacity-60" : "text-label-3")}>{o.count}</span>}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 export function SearchField({
   value,
   onChange,
@@ -362,6 +330,16 @@ export function Delta({
     >
       <Icon size={pill ? 13 : 15} strokeWidth={2.8} />
       {percent(Math.abs(value), digits).replace(/^[+−]/, "")}
+    </span>
+  );
+}
+
+/** Diferença em reais: gastar mais fica vermelho, gastar menos fica verde. */
+export function MoneyChange({ value, className }: { value: number; className?: string }) {
+  const cents = Math.round(value * 100);
+  return (
+    <span className={cn("tabular font-semibold", cents > 0 ? "text-up" : cents < 0 ? "text-down" : "text-label-2", className)}>
+      {signedMoney(value)}
     </span>
   );
 }
