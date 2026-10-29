@@ -32,7 +32,12 @@ export type Backup = { app: "cesta"; version: 1; exportedAt: string; data: Data 
 
 type NewShoppingItem = { name: string; productKey?: string; qty?: number; unit?: string };
 
+/** Assinatura: por enquanto só o teste grátis local; `proUntil` fica para a compra real nas lojas. */
+export type Plan = { trialStartedAt?: string; proUntil?: string };
+
 type State = Data & {
+  plan: Plan;
+  startTrial: () => void;
   hydrated: boolean;
   addReceipt: (draft: ParsedReceipt, source?: Receipt["source"]) => { id: string; duplicate: boolean };
   removeReceipt: (id: string) => void;
@@ -165,15 +170,20 @@ export const useStore = create<State>()(
       },
 
       reset: () => setState({ ...empty }),
+
+      plan: {},
+      startTrial: () =>
+        setState((s) => (s.plan.trialStartedAt ? {} : { plan: { ...s.plan, trialStartedAt: new Date().toISOString() } })),
     }),
     {
       name: "cesta-data",
       version: 1,
       storage: createJSONStorage(() => idbStorage),
       skipHydration: true,
-      partialize: ({ receipts, shopping, aliases, names, categories }) => ({
+      partialize: ({ receipts, shopping, aliases, names, categories, plan }) => ({
         receipts,
         shopping,
+        plan,
         aliases,
         names,
         categories,

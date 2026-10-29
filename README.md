@@ -14,6 +14,8 @@ e o que você sempre compra.
 | **Lista** | Lista de compras com check; aba *Sempre compro* gerada sozinha (produtos que aparecem em pelo menos metade dos meses) com quantidade sugerida |
 | **Escanear** | Câmera com leitura contínua, foto da galeria ou link colado; prévia da nota antes de salvar; bloqueia nota duplicada |
 | **Notas / Ajustes** | Histórico por mês, detalhe da nota, tema claro/escuro/automático, backup (exportar/importar), dados de exemplo |
+| **Relatório do ano** | Cards em tela cheia (estilo stories): total, mês mais caro, produto campeão (em kg/L), categorias, o que mais subiu, mercado favorito e imagem para compartilhar |
+| **Cesta Pro** | Grátis mostra os últimos 3 meses; o Pro libera histórico completo, relatório do ano inteiro e comparação de embalagens. Hoje só existe o teste de 7 dias (guardado no aparelho); a assinatura paga entra com o app nas lojas |
 
 ## Como funciona
 

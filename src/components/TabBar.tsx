@@ -16,8 +16,8 @@ const TABS = [
 export function TabBar() {
   const pathname = usePathname();
   const empty = useStore((s) => s.receipts.length === 0);
-  // Escondida na câmera e na tela de boas-vindas
-  if (pathname.startsWith("/escanear") || (empty && pathname === "/")) return null;
+  // Escondida na câmera, no relatório e na tela de boas-vindas
+  if (pathname.startsWith("/escanear") || pathname.startsWith("/relatorio") || (empty && pathname === "/")) return null;
 
   const isActive = (match: string[]) =>
     match.some((m) => (m === "/" ? pathname === "/" : pathname === m || pathname.startsWith(`${m}/`)));

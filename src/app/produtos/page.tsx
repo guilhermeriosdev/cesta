@@ -2,12 +2,14 @@
 
 import { Package } from "lucide-react";
 import { useMemo, useState } from "react";
+import { LockedCard } from "@/components/Pro";
 import { ProductRow } from "@/components/ProductRow";
 import { Screen } from "@/components/Screen";
 import { Empty, List, MoneyChange, Pill, SearchField, Section, Segmented } from "@/components/ui";
 import { avgPrice, lastPricing, monthBreakdown, type Product } from "@/lib/analytics";
 import { currentMonth, formatQty, money, monthLower, monthName, shiftMonth, unitLabel } from "@/lib/format";
 import { normalizeText } from "@/lib/normalize";
+import { FREE_MONTHS, usePro } from "@/lib/pro";
 import { perLabel } from "@/lib/size";
 import { useData, useMonth } from "@/lib/store";
 
@@ -18,6 +20,7 @@ export default function ProductsPage() {
   const [query, setQuery] = useState("");
   const { receipts, products, months } = useData();
   const [month] = useMonth(months);
+  const pro = usePro();
   const prev = shiftMonth(month, -1);
   const hasPrev = months.includes(prev);
   const cutoff = month === currentMonth() ? new Date().getDate() : undefined;
@@ -52,7 +55,13 @@ export default function ProductsPage() {
         ]}
       />
 
-      {tab === "mes" ? (
+      {tab === "mes" && pro.isLocked(month) ? (
+        <LockedCard
+          className="mt-4"
+          title={`${monthName(month)} está no Pro`}
+          text={`No grátis você vê os últimos ${FREE_MONTHS} meses.`}
+        />
+      ) : tab === "mes" ? (
         <>
           {hasPrev && (
             <p className="mt-4 px-1 text-[14px] leading-snug text-label-2">

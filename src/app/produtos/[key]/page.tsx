@@ -1,9 +1,10 @@
 "use client";
 
-import { Check, GitMerge, ListPlus, Package, Pencil, Split, Tag } from "lucide-react";
+import { Check, GitMerge, ListPlus, Lock, Package, Pencil, Split, Tag } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { PriceLine } from "@/components/charts";
+import { LockedCard, ProBadge } from "@/components/Pro";
 import { productHref } from "@/components/ProductRow";
 import { Screen } from "@/components/Screen";
 import { Sheet } from "@/components/Sheet";
@@ -12,6 +13,7 @@ import { avgPrice, lastPricing, packComparison, storeStats, type Product } from 
 import { CATEGORIES, CATEGORY_ORDER, categorize } from "@/lib/categories";
 import { formatQty, money, monthName, relativeDay, unitLabel } from "@/lib/format";
 import { normalizeText, prettyName, prettyStore } from "@/lib/normalize";
+import { usePro } from "@/lib/pro";
 import { formatSize, perLabel, type Base } from "@/lib/size";
 import { toast, useData, useStore } from "@/lib/store";
 
@@ -54,6 +56,9 @@ function ProductDetail({ product: p, products }: { product: Product; products: P
   const previous = p.purchases.length > 1 ? p.purchases[p.purchases.length - 2].unitPrice : null;
   const stores = useMemo(() => storeStats(p), [p]);
   const pricing = lastPricing(p);
+  const pro = usePro();
+  const visiblePurchases = p.purchases.filter((x) => !pro.isLocked(x.month));
+  const lockedMonths = Object.keys(p.months).filter((m) => pro.isLocked(m)).length;
   const packs = useMemo(() => packComparison(p, products), [p, products]);
   const monthsDesc = Object.keys(p.months).sort().reverse();
   const inList = shopping.some((i) => !i.checked && i.productKey === p.key);
@@ -90,9 +95,9 @@ function ProductDetail({ product: p, products }: { product: Product; products: P
             </div>
           )}
         </div>
-        {p.purchases.length > 1 && (
+        {visiblePurchases.length > 1 && (
           <div className="mt-5">
-            <PriceLine points={p.purchases.map((x) => ({ date: x.date, value: x.unitPrice }))} />
+            <PriceLine points={visiblePurchases.map((x) => ({ date: x.date, value: x.unitPrice }))} />
           </div>
         )}
         <div className="mt-4 flex justify-between border-t border-sep pt-3 text-[13px] text-label-2">
@@ -107,7 +112,15 @@ function ProductDetail({ product: p, products }: { product: Product; products: P
         </div>
       </Card>
 
-      {packs.length > 1 && pricing && (
+      {packs.length > 1 && pricing && !pro.isPro && (
+        <LockedCard
+          className="mt-8"
+          title="Melhor embalagem"
+          text={`Compare ${packs.length} marcas e tamanhos deste produto por ${baseWord(pricing.base)}.`}
+        />
+      )}
+
+      {packs.length > 1 && pricing && pro.isPro && (
         <Section
           title={pricing.base === "kg" ? "Por kg" : pricing.base === "L" ? "Por litro" : "Por unidade"}
           footer={
@@ -135,7 +148,7 @@ function ProductDetail({ product: p, products }: { product: Product; products: P
 
       <Section title="Mês a mês">
         <List>
-          {monthsDesc.map((m) => {
+          {monthsDesc.filter((m) => !pro.isLocked(m)).map((m) => {
             const stat = p.months[m];
             return (
               <Row
@@ -146,6 +159,19 @@ function ProductDetail({ product: p, products }: { product: Product; products: P
               />
             );
           })}
+          {lockedMonths > 0 && (
+            <Row
+              href="/pro"
+              icon={<IconTile icon={Lock} color="#FF2D55" />}
+              title={
+                <span className="flex items-center gap-1.5">
+                  Mais {lockedMonths} {lockedMonths === 1 ? "mês" : "meses"} <ProBadge />
+                </span>
+              }
+              subtitle="Histórico completo no Pro"
+              chevron
+            />
+          )}
         </List>
       </Section>
 

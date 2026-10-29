@@ -6,11 +6,13 @@ import { Screen } from "@/components/Screen";
 import { ConfirmSheet, Sheet } from "@/components/Sheet";
 import { IconTile, List, Row, Section, Segmented } from "@/components/ui";
 import { toast, useStore, type Backup } from "@/lib/store";
+import { usePro } from "@/lib/pro";
 import { getThemePref, setThemePref, type ThemePref } from "@/lib/theme";
 
 export default function SettingsPage() {
   const [theme, setThemeState] = useState<ThemePref>(getThemePref);
   const receipts = useStore((s) => s.receipts);
+  const pro = usePro();
   const hasDemo = receipts.some((r) => r.source === "demo");
   const fileRef = useRef<HTMLInputElement>(null);
   const [confirm, setConfirm] = useState<null | "reset" | "demo">(null);
@@ -93,6 +95,17 @@ export default function SettingsPage() {
 
       <Section title={<span className="text-[17px]">App</span>}>
         <List>
+          <Row
+            href="/pro"
+            icon={<IconTile icon={Sparkles} color="#FF2D55" />}
+            title="Cesta Pro"
+            value={
+              <span className="text-[15px] font-normal text-label-2">
+                {pro.paid ? "Ativo" : pro.trialActive ? "Em teste" : "Grátis"}
+              </span>
+            }
+            chevron
+          />
           <Row icon={<IconTile icon={Smartphone} color="#5856D6" />} title="Instalar na tela de início" onClick={() => setInstall(true)} chevron />
           <Row
             icon={<IconTile icon={Database} color="#8E8E93" />}

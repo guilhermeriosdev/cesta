@@ -9,11 +9,14 @@ export function MonthBars({
   data,
   selected,
   onSelect,
+  isLocked,
   height = 92,
 }: {
   data: { month: string; value: number }[];
   selected?: string;
   onSelect?: (month: string) => void;
+  /** meses do Pro aparecem listrados */
+  isLocked?: (month: string) => boolean;
   height?: number;
 }) {
   const max = Math.max(1, ...data.map((d) => d.value));
@@ -21,6 +24,7 @@ export function MonthBars({
     <div className="flex items-end gap-2">
       {data.map((d) => {
         const active = d.month === selected;
+        const locked = isLocked?.(d.month) ?? false;
         const h = d.value > 0 ? Math.max(6, (d.value / max) * height) : 4;
         return (
           <button
@@ -35,9 +39,15 @@ export function MonthBars({
               <div
                 className={cn(
                   "w-full max-w-[34px] rounded-[7px] transition-[height,background-color] duration-500 ease-out",
-                  active ? "bg-label" : d.value > 0 ? "bg-fill-strong" : "bg-fill",
+                  active && !locked ? "bg-label" : d.value > 0 && !locked ? "bg-fill-strong" : "bg-fill",
+                  active && locked && "ring-2 ring-label ring-offset-2 ring-offset-card",
                 )}
-                style={{ height: h }}
+                style={{
+                  height: h,
+                  backgroundImage: locked
+                    ? "repeating-linear-gradient(135deg, var(--fill-strong) 0 3px, transparent 3px 7px)"
+                    : undefined,
+                }}
               />
             </div>
             <span className={cn("text-[11px] font-semibold", active ? "text-label" : "text-label-3")}>{monthShort(d.month)}</span>

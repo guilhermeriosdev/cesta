@@ -1,10 +1,11 @@
 "use client";
 
-import { ChartColumn, ChevronLeft, ChevronRight, ListChecks, ScanLine, Settings, ShoppingBasket, Store } from "lucide-react";
+import { ChartColumn, ChevronLeft, ChevronRight, ListChecks, ScanLine, Settings, ShoppingBasket, Sparkles, Store } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { BucketSheet, ChangeList } from "@/components/Breakdown";
 import { MonthBars } from "@/components/charts";
+import { LockedCard } from "@/components/Pro";
 import { Screen } from "@/components/Screen";
 import { BigMoney, Button, Card, Delta, IconButton, List, Row, Section, SectionLink, WidgetLabel, cn } from "@/components/ui";
 import { monthBreakdown, monthSummaries, type Bucket } from "@/lib/analytics";
@@ -20,6 +21,7 @@ import {
   todayLabel,
 } from "@/lib/format";
 import { prettyStore } from "@/lib/normalize";
+import { FREE_MONTHS, usePro } from "@/lib/pro";
 import { toast, useData, useMonth, useStore } from "@/lib/store";
 
 export default function HomePage() {
@@ -31,7 +33,10 @@ export default function HomePage() {
 function Dashboard({ receipts, products, months }: ReturnType<typeof useData>) {
   const [month, setMonth] = useMonth(months);
   const [open, setOpen] = useState<Bucket | null>(null);
+  const pro = usePro();
+  const locked = pro.isLocked(month);
   const prev = shiftMonth(month, -1);
+  const reportYear = months[0].slice(0, 4);
 
   const summaries = useMemo(() => monthSummaries(receipts), [receipts]);
   const total = summaries.get(month)?.total ?? 0;
@@ -79,6 +84,15 @@ function Dashboard({ receipts, products, months }: ReturnType<typeof useData>) {
         </IconButton>
       </div>
 
+      {locked && (
+        <LockedCard
+          title={`${monthName(month)} está no Pro`}
+          text={`No grátis você vê os últimos ${FREE_MONTHS} meses. As notas antigas continuam salvas.`}
+          className="mb-3"
+        />
+      )}
+
+      {!locked && (
       <Card>
         <WidgetLabel icon={ShoppingBasket}>Gasto em {monthLower(month)}</WidgetLabel>
         <div className="mt-2">
@@ -98,11 +112,18 @@ function Dashboard({ receipts, products, months }: ReturnType<typeof useData>) {
           )}
         </div>
         <div className="mt-5">
-          <MonthBars data={bars} selected={month} onSelect={setMonth} />
+          <MonthBars data={bars} selected={month} onSelect={setMonth} isLocked={pro.isLocked} />
         </div>
       </Card>
+      )}
 
-      {breakdown && breakdown.baseTotal > 0 && (
+      {locked && (
+        <Card>
+          <MonthBars data={bars} selected={month} onSelect={setMonth} isLocked={pro.isLocked} />
+        </Card>
+      )}
+
+      {!locked && breakdown && breakdown.baseTotal > 0 && (
         <Section
           title="O que mudou"
           footer={`Somando as linhas, dá a diferença de ${signedMoney(diff)}. Toque numa linha para ver os produtos.`}
@@ -111,6 +132,21 @@ function Dashboard({ receipts, products, months }: ReturnType<typeof useData>) {
         </Section>
       )}
 
+      <Link
+        href="/relatorio"
+        className="pressable mt-8 flex items-center gap-3.5 rounded-[24px] bg-[linear-gradient(135deg,#1c1c1e_0%,#3a1d2e_100%)] p-4 text-white shadow-[0_10px_30px_rgba(0,0,0,0.18)]"
+      >
+        <div className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-[linear-gradient(135deg,#FF9500,#FF2D55)]">
+          <Sparkles size={21} strokeWidth={2.1} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[16px] font-semibold">Seu {reportYear} no mercado</div>
+          <div className="text-[14px] text-white/60">Mês mais caro, produto campeão e mais</div>
+        </div>
+        <ChevronRight size={18} strokeWidth={2.4} className="text-white/40" />
+      </Link>
+
+      {!locked && (
       <Section title={`Notas de ${monthLower(month)}`} action={<SectionLink href="/notas">Ver todas</SectionLink>}>
         <List>
           {monthReceipts.slice(0, 4).map((r) => (
@@ -130,6 +166,7 @@ function Dashboard({ receipts, products, months }: ReturnType<typeof useData>) {
           ))}
         </List>
       </Section>
+      )}
 
       {breakdown && <BucketSheet breakdown={breakdown} bucket={open} onClose={() => setOpen(null)} />}
     </Screen>
