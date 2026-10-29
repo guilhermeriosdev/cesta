@@ -4,14 +4,18 @@ import { Check, GitMerge, ListPlus, Package, Pencil, Split, Tag } from "lucide-r
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { PriceLine } from "@/components/charts";
+import { productHref } from "@/components/ProductRow";
 import { Screen } from "@/components/Screen";
 import { Sheet } from "@/components/Sheet";
 import { BigMoney, Button, Card, CategoryIcon, Delta, Empty, IconTile, List, Row, SearchField, Section } from "@/components/ui";
-import { avgPrice, storeStats, type Product } from "@/lib/analytics";
+import { avgPrice, lastPricing, packComparison, storeStats, type Product } from "@/lib/analytics";
 import { CATEGORIES, CATEGORY_ORDER, categorize } from "@/lib/categories";
 import { formatQty, money, monthName, relativeDay, unitLabel } from "@/lib/format";
 import { normalizeText, prettyName, prettyStore } from "@/lib/normalize";
+import { formatSize, perLabel, type Base } from "@/lib/size";
 import { toast, useData, useStore } from "@/lib/store";
+
+const baseWord = (b: Base) => (b === "kg" ? "kg" : b === "L" ? "litro" : "unidade");
 
 const decode = (s: string) => {
   try {
@@ -49,6 +53,8 @@ function ProductDetail({ product: p, products }: { product: Product; products: P
   const max = Math.max(...prices);
   const previous = p.purchases.length > 1 ? p.purchases[p.purchases.length - 2].unitPrice : null;
   const stores = useMemo(() => storeStats(p), [p]);
+  const pricing = lastPricing(p);
+  const packs = useMemo(() => packComparison(p, products), [p, products]);
   const monthsDesc = Object.keys(p.months).sort().reverse();
   const inList = shopping.some((i) => !i.checked && i.productKey === p.key);
   const extraSources = p.sources.filter((s) => s.key !== p.key);
@@ -70,6 +76,12 @@ function ProductDetail({ product: p, products }: { product: Product; products: P
               <BigMoney value={p.lastPrice} size={36} />
               <span className="text-[15px] font-semibold text-label-2">/{unit}</span>
             </div>
+            {pricing?.size && (
+              <div className="mt-1 text-[14px] font-medium text-label-2 tabular">
+                {money(pricing.value)}
+                {perLabel(pricing.base)} · {formatSize(pricing.size)}
+              </div>
+            )}
           </div>
           {previous != null && (
             <div className="pb-1 text-right">
@@ -94,6 +106,32 @@ function ProductDetail({ product: p, products }: { product: Product; products: P
           )}
         </div>
       </Card>
+
+      {packs.length > 1 && pricing && (
+        <Section
+          title={pricing.base === "kg" ? "Por kg" : pricing.base === "L" ? "Por litro" : "Por unidade"}
+          footer={
+            packs[0].product.key === p.key
+              ? `Este é o mais barato por ${baseWord(pricing.base)} entre os que você já comprou.`
+              : `${packs[0].product.name} sai ${Math.round((1 - packs[0].pricing.value / pricing.value) * 100)}% mais barato por ${baseWord(pricing.base)}.`
+          }
+        >
+          <List>
+            {packs.map(({ product: x, pricing: xp }, i) => (
+              <Row
+                key={x.key}
+                href={x.key === p.key ? undefined : productHref(x.key)}
+                icon={<CategoryIcon category={x.category} size={30} />}
+                title={<span className={x.key === p.key ? "font-semibold" : undefined}>{x.name}</span>}
+                subtitle={`${x.key === p.key ? "este · " : ""}${xp.size ? `${formatSize(xp.size)} · ` : ""}${money(x.lastPrice)}`}
+                value={<span className="text-[15px]">{money(xp.value)}{perLabel(xp.base)}</span>}
+                valueSub={i === 0 ? <span className="font-semibold text-down">mais barato</span> : undefined}
+                chevron={x.key !== p.key}
+              />
+            ))}
+          </List>
+        </Section>
+      )}
 
       <Section title="Mês a mês">
         <List>

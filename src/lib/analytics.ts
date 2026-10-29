@@ -1,6 +1,7 @@
 import { categorize, type CategoryId } from "./categories";
 import { isWeight, monthOf } from "./format";
 import { itemKey, prettyName } from "./normalize";
+import { familyKey, unitPricing, type UnitPricing } from "./size";
 import type { Prefs, Receipt } from "./types";
 
 export type Purchase = {
@@ -278,4 +279,27 @@ export function storeStats(product: Product) {
   return [...map.values()]
     .map((s) => ({ ...s, avg: s.qty > 0 ? s.spent / s.qty : 0 }))
     .sort((a, b) => a.avg - b.avg);
+}
+
+const lastRawName = (p: Product) => p.purchases[p.purchases.length - 1].rawName;
+
+/** Preço por kg / litro / unidade da última compra (pelo tamanho escrito na nota). */
+export function lastPricing(p: Product): UnitPricing | undefined {
+  const last = p.purchases[p.purchases.length - 1];
+  return unitPricing(last.rawName, p.unit, last.unitPrice);
+}
+
+/**
+ * Outras embalagens/marcas do mesmo tipo de produto (mesma categoria e mesma base: kg, L ou un),
+ * do mais barato para o mais caro por kg/L — inclui o próprio produto.
+ */
+export function packComparison(product: Product, products: Product[]) {
+  const mine = lastPricing(product);
+  if (!mine) return [];
+  const family = familyKey(lastRawName(product));
+  return products
+    .filter((p) => p.category === product.category && familyKey(lastRawName(p)) === family)
+    .map((p) => ({ product: p, pricing: lastPricing(p) }))
+    .filter((x): x is { product: Product; pricing: UnitPricing } => x.pricing?.base === mine.base)
+    .sort((a, b) => a.pricing.value - b.pricing.value);
 }

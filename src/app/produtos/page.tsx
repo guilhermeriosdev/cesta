@@ -5,9 +5,10 @@ import { useMemo, useState } from "react";
 import { ProductRow } from "@/components/ProductRow";
 import { Screen } from "@/components/Screen";
 import { Empty, List, MoneyChange, Pill, SearchField, Section, Segmented } from "@/components/ui";
-import { avgPrice, monthBreakdown, type Product } from "@/lib/analytics";
+import { avgPrice, lastPricing, monthBreakdown, type Product } from "@/lib/analytics";
 import { currentMonth, formatQty, money, monthLower, monthName, shiftMonth, unitLabel } from "@/lib/format";
 import { normalizeText } from "@/lib/normalize";
+import { perLabel } from "@/lib/size";
 import { useData, useMonth } from "@/lib/store";
 
 type Tab = "mes" | "todos";
@@ -100,12 +101,21 @@ export default function ProductsPage() {
             <List>
               {all.map((p) => {
                 const monthsCount = Object.keys(p.months).length;
+                const pricing = lastPricing(p);
                 return (
                   <ProductRow
                     key={p.key}
                     product={p}
                     subtitle={`${p.times}× · em ${monthsCount} ${monthsCount === 1 ? "mês" : "meses"}`}
                     value={`${money(p.lastPrice)}/${unitLabel(p.unit)}`}
+                    valueSub={
+                      pricing?.size ? (
+                        <span className="text-label-2">
+                          {money(pricing.value)}
+                          {perLabel(pricing.base)}
+                        </span>
+                      ) : undefined
+                    }
                   />
                 );
               })}

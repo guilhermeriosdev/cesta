@@ -40,6 +40,8 @@ type DemoProduct = {
 const CATALOG: DemoProduct[] = [
   { name: "LEITE UHT ITALAC INTEGRAL 1L", ean: "808064001", unit: "UN", price: 4.79, qty: [6, 12], p: 0.9, drift: 0.015 },
   { name: "ARROZ TIO JOAO T1 5KG", ean: "500020110", unit: "UN", price: 27.9, qty: [1, 1], p: 0.55 },
+  { name: "ARROZ CAMIL TIPO 1 1KG", ean: "102030032", unit: "UN", price: 6.49, qty: [1, 2], p: 0.3 },
+  { name: "AGUA MIN CRYSTAL S/GAS 500ML", ean: "102030033", unit: "UN", price: 1.99, qty: [2, 6], p: 0.3 },
   { name: "FEIJAO CARIOCA CAMIL 1KG", ean: "102030001", unit: "UN", price: 8.49, qty: [1, 2], p: 0.6, drift: 0.02 },
   { name: "CAFE PILAO TRADICIONAL 500G", ean: "102030002", unit: "UN", price: 18.9, qty: [1, 2], p: 0.7, drift: 0.035 },
   { name: "ACUCAR UNIAO REFINADO 1KG", ean: "102030003", unit: "UN", price: 4.99, qty: [1, 2], p: 0.45 },
