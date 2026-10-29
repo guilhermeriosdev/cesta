@@ -1,0 +1,208 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Cores no estilo iOS — trocam sozinhas entre claro e escuro */
+:root {
+  --bg: #f2f2f7;
+  --card: #ffffff;
+  --elevated: #ffffff;
+  --label: #000000;
+  --label-2: rgba(60, 60, 67, 0.6);
+  --label-3: rgba(60, 60, 67, 0.3);
+  --sep: rgba(60, 60, 67, 0.16);
+  --fill: rgba(120, 120, 128, 0.12);
+  --fill-strong: rgba(120, 120, 128, 0.2);
+  --glass: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --up: #ff3b30;
+  --down: #34c759;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.dark {
+  --bg: #000000;
+  --card: #1c1c1e;
+  --elevated: #2c2c2e;
+  --label: #ffffff;
+  --label-2: rgba(235, 235, 245, 0.6);
+  --label-3: rgba(235, 235, 245, 0.3);
+  --sep: rgba(84, 84, 88, 0.55);
+  --fill: rgba(120, 120, 128, 0.24);
+  --fill-strong: rgba(120, 120, 128, 0.36);
+  --glass: rgba(37, 37, 40, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --up: #ff453a;
+  --down: #30d158;
+  --shadow: none;
+}
+
+/* Antes do JS aplicar o tema, o fundo já segue o sistema (evita "flash" branco no escuro) */
+@media (prefers-color-scheme: dark) {
+  html:not(.light) {
+    background: #000000;
+    color-scheme: dark;
+  }
+}
+
+/* Folhas (sheets) ficam um degrau acima do fundo */
+.sheet {
+  background: var(--bg);
+}
+.dark .sheet {
+  --bg: #1c1c1e;
+  --card: #2c2c2e;
+  --fill: rgba(120, 120, 128, 0.32);
+  background: #1c1c1e;
+}
+
+@theme inline {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI Variable Text",
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-elevated: var(--elevated);
+  --color-label: var(--label);
+  --color-label-2: var(--label-2);
+  --color-label-3: var(--label-3);
+  --color-sep: var(--sep);
+  --color-fill: var(--fill);
+  --color-fill-strong: var(--fill-strong);
+  --color-glass: var(--glass);
+  --color-glass-border: var(--glass-border);
+  --color-up: var(--up);
+  --color-down: var(--down);
+}
+
+html {
+  background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--label);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  font-feature-settings: "ss01", "cv11";
+  overscroll-behavior-y: none;
+}
+
+button,
+a {
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+input,
+textarea {
+  font-size: 17px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Lista agrupada estilo Ajustes do iPhone: separador começa depois do ícone */
+.ios-list > .row + .row > .row-body {
+  box-shadow: inset 0 0.5px 0 var(--sep);
+}
+
+.pressable {
+  transition: transform 160ms ease, opacity 160ms ease, background-color 160ms ease;
+}
+.pressable:active {
+  transform: scale(0.975);
+  opacity: 0.85;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-in {
+  animation: fade-up 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes scan-line {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateY(var(--travel, 220px));
+    opacity: 0.9;
+  }
+}
+.scan-line {
+  animation: scan-line 2.4s ease-in-out infinite;
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.pop {
+  animation: pop 480ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+.slide-up {
+  animation: slide-up 420ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+.toast-in {
+  animation: toast-in 320ms cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}

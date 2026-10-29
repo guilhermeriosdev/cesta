@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>NFC-e - Consulta Pública</title></head>
+<body>
+<div data-role="page" id="pgConsultaNFCe">
+  <div data-role="content" id="conteudo">
+    <div class="txtCenter">
+      <div id="u20" class="txtTopo">SUPERMERCADO EXEMPLO LTDA</div>
+      <div class="text">
+        CNPJ:
+        12.345.678/0001-90
+      </div>
+      <div class="text">
+        RUA DAS FLORES
+        ,
+        123
+        ,
+        ,
+        CENTRO
+        ,
+        SAO PAULO
+        ,
+        SP
+      </div>
+    </div>
+    <table data-filter="true" id="tabResult" width="100%">
+      <tr id="Item + 1">
+        <td valign="top"><span class="txtTit">LEITE UHT ITALAC INTEGRAL 1L</span><span class="RCod">(Código: 7898080640017 )</span><br><span class="Rqtd"><strong>Qtde.:</strong>12</span><span class="RUN"><strong>UN: </strong>UN</span><span class="RvlUnit"><strong>Vl. Unit.:</strong>&nbsp;&nbsp;4,79</span></td>
+        <td align="right" valign="top" class="txtTit noWrap">Vl. Total<br><span class="valor">57,48</span></td>
+      </tr>
+      <tr id="Item + 2">
+        <td valign="top"><span class="txtTit">BANANA PRATA KG</span><span class="RCod">(Código: 2041 )</span><br><span class="Rqtd"><strong>Qtde.:</strong>1,235</span><span class="RUN"><strong>UN: </strong>KG</span><span class="RvlUnit"><strong>Vl. Unit.:</strong>&nbsp;&nbsp;6,99</span></td>
+        <td align="right" valign="top" class="txtTit noWrap">Vl. Total<br><span class="valor">8,63</span></td>
+      </tr>
+      <tr id="Item + 3">
+        <td valign="top"><span class="txtTit">ARROZ TIO JOAO T1 5KG</span><span class="RCod">(Código: 7893500020110 )</span><br><span class="Rqtd"><strong>Qtde.:</strong>1</span><span class="RUN"><strong>UN: </strong>PCT</span><span class="RvlUnit"><strong>Vl. Unit.:</strong>&nbsp;&nbsp;1.023,90</span></td>
+        <td align="right" valign="top" class="txtTit noWrap">Vl. Total<br><span class="valor">1.023,90</span></td>
+      </tr>
+    </table>
+    <div id="totalNota" class="txtRight">
+      <div id="linhaTotal"><label>Qtd. total de itens:</label><span class="totalNumb">3</span></div>
+      <div id="linhaTotal"><label>Valor total R$:</label><span class="totalNumb">1.090,01</span></div>
+      <div id="linhaTotal"><label>Descontos R$:</label><span class="totalNumb">2,00</span></div>
+      <div id="linhaTotal" class="linhaShade"><label>Valor a pagar R$:</label><span class="totalNumb txtMax">1.088,01</span></div>
+      <div id="linhaForma"><label>Forma de pagamento:</label><span class="totalNumb txtTitR">Valor pago R$:</span></div>
+      <div id="linhaTotal"><label class="tx">Cartão de Débito</label><span class="totalNumb">1.088,01</span></div>
+      <div id="linhaTotal"><label class="tx">Troco </label><span class="totalNumb">0,00</span></div>
+    </div>
+  </div>
+  <div data-role="collapsible" id="infos">
+    <h4>Informações gerais da Nota</h4>
+    <ul data-role="listview">
+      <li><strong>Modelo: </strong>65 <strong>Série: </strong>1 <strong>Número: </strong>123456 <strong>Emissão: </strong>12/10/2026 18:33:22 - Via Consumidor<br><br><strong>Protocolo de Autorização: </strong>135260000000000 12/10/2026 às 18:33:25</li>
+    </ul>
+    <h4>Chave de acesso</h4>
+    <ul data-role="listview"><li><span class="chave">3526 1012 3456 7800 0190 6500 1000 1234 5610 0000 0010</span></li></ul>
+  </div>
+</div>
+</body>
+</html>
