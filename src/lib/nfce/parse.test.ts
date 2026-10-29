@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { findInnerDocumentUrl, parseBRNumber, parseNfceHtml } from "./parse";
+import { findInnerDocumentUrl, parseBRNumber, parseNfceHtml, portalErrorMessage } from "./parse";
 import { accessKeyFromUrl, infoFromAccessKey, looksLikeNfce, parseQrInput } from "./url";
 
 const fixture = (name: string) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8");
@@ -64,6 +64,23 @@ describe("layout alternativo (MG)", () => {
     expect(nota.issuedAt).toBe("2026-10-05T10:12:44");
     expect(nota.subtotal).toBe(34.72);
     expect(nota.accessKey).toBe("31261098765432000110650020000456781000000027");
+  });
+});
+
+describe("portal de SP com erro", () => {
+  const html = fixture("sp-erro.html");
+
+  it("traz a mensagem do pop-up da SEFAZ em vez de 'sem itens'", () => {
+    expect(parseNfceHtml(html).items).toHaveLength(0);
+    expect(portalErrorMessage(html)).toBe(
+      "Problemas na consulta via QR Code – QR Code inválido. Dígito verificador Chave de Acesso do QR Code inválido",
+    );
+    expect(portalErrorMessage(fixture("padrao.html"))).toBeUndefined();
+  });
+
+  it("não segue redirecionamento de script em páginas grandes", () => {
+    const base = new URL("https://www.nfce.fazenda.sp.gov.br/NFCeConsultaPublica/Paginas/ConsultaQRCode.aspx");
+    expect(findInnerDocumentUrl(html + " ".repeat(6000), base)).toBeUndefined();
   });
 });
 

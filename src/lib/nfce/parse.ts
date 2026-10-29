@@ -152,6 +152,27 @@ export function parseNfceHtml(html: string): ParsedNfce {
   };
 }
 
+/** Texto visível da página (sem scripts/estilos), para logs e mensagens. */
+export function visibleText(html: string) {
+  const $ = cheerio.load(html.replace(/>\s*</g, "> <"));
+  $("script, style, noscript").remove();
+  return clean($("body").text() || $.root().text());
+}
+
+/**
+ * Mensagem de erro que o portal mostra num pop-up (ex.: SP: "QR Code inválido",
+ * "nota não encontrada"). Em SP ela é injetada por script: $('#spnErro…').html('…').
+ */
+export function portalErrorMessage(html: string): string | undefined {
+  const fromScript = html.match(/#spnErro\w*['"]\)\.html\(\s*'((?:[^'\\]|\\.)*)'/)?.[1];
+  const $ = cheerio.load(html.replace(/>\s*</g, "> <"));
+  const raw = fromScript ?? $("#spnErroMaster, #spnErroProsseguirMaster, #lblErro, .msgErro").text();
+  const text = clean(cheerio.load(`<div>${(raw ?? "").replace(/<br\s*\/?>|<\/br>/gi, " ")}</div>`)("div").text())
+    .replace(/\s*Erro\(s\):\s*-?\s*/i, " ")
+    .trim();
+  return text || undefined;
+}
+
 /** Alguns portais (ex.: RS) entregam a nota dentro de um iframe ou com redirecionamento por JS. */
 export function findInnerDocumentUrl(html: string, base: URL): URL | undefined {
   const $ = cheerio.load(html);
@@ -159,7 +180,8 @@ export function findInnerDocumentUrl(html: string, base: URL): URL | undefined {
     $("iframe[src]").attr("src"),
     $("frame[src]").attr("src"),
     $('meta[http-equiv="refresh" i]').attr("content")?.match(/url=(.+)$/i)?.[1],
-    html.match(/(?:window\.)?location(?:\.href)?\s*=\s*["']([^"']+)["']/)?.[1],
+    // Só confia em location= de páginas pequenas (páginas de redirecionamento), não de portais cheios de script
+    html.length < 5000 ? html.match(/(?:window\.)?location(?:\.href)?\s*=\s*["']([^"']+)["']/)?.[1] : undefined,
   ];
   for (const c of candidates) {
     if (!c) continue;

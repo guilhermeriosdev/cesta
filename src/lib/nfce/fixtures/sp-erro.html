@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head><title>
+	Consulta NFC-e QR Code - Secretaria da Fazenda - Governo do Estado de São Paulo
+</title></head>
+<body>
+<form method="post" action="./ConsultaQRCode.aspx?p=35261012345678000190650010001234561000000010%7C2%7C1%7C1%7C5A0F8C1E9B2D7A4C3E6F1B8D9A2C4E7F0B3D5A61" id="ctl00">
+  <input type="hidden" name="ctl00$hdfProsseguimentoAtual" id="hdfProsseguimentoAtual" value="RedirectParaConsultaPublica" />
+  <input type="submit" name="ctl00$btnDisparaPageLoad" value="" id="btnDisparaPageLoad" style="display: none" />
+  <h3 style="text-align: left">Consulta Pública por QR Code</h3>
+  <div id="divErroProsseguirMaster" style="display: none"><span id="spnErroProsseguirMaster" class="corTextoErro"></span></div>
+  <noscript>Seu navegador não da suporte a JavaScript. Por favor atualize-o!</noscript>
+  <script type="text/javascript">
+//<![CDATA[
+$('#spnErroProsseguirMaster').html('<ul><li>Problemas na consulta via QR Code – QR Code inválido. Erro(s): </br>- Dígito verificador Chave de Acesso do QR Code inválido</li></ul>'); $(function(){openDialog('divErroProsseguirMaster');});//]]>
+  </script>
+  <script>function irParaConsulta(){ window.location.href = '../Paginas/ConsultaPublica.aspx'; }</script>
+</form>
+</body>
+</html>

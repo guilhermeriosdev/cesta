@@ -1,5 +1,5 @@
 import type { ParsedReceipt } from "../types";
-import { findInnerDocumentUrl, parseNfceHtml } from "./parse";
+import { findInnerDocumentUrl, parseNfceHtml, portalErrorMessage, visibleText } from "./parse";
 import { NfceError, accessKeyFromUrl, formatCnpj, infoFromAccessKey, isAllowedUrl, parseQrInput } from "./url";
 
 const USER_AGENT =
@@ -17,13 +17,21 @@ function decode(buffer: ArrayBuffer, contentType: string | null) {
 }
 
 /** fetch que segue redirecionamentos guardando cookies (alguns portais exigem sessão). */
+/**
+ * O "|" do parâmetro p= vai codificado (%7C), como o próprio portal faz no formulário.
+ * Sem isso o firewall da SEFAZ-SP às vezes responde "Request Rejected".
+ */
+function requestUrl(url: URL) {
+  return url.href.replace(/\|/g, "%7C");
+}
+
 async function fetchHtml(start: URL, jar: Map<string, string>) {
   let url = start;
   for (let hop = 0; hop < 6; hop++) {
     if (!isAllowedUrl(url)) throw new NfceError("host", "O portal redirecionou para um endereço não permitido.", 502);
     let res: Response;
     try {
-      res = await fetch(url, {
+      res = await fetch(requestUrl(url), {
         redirect: "manual",
         cache: "no-store",
         signal: AbortSignal.timeout(15_000),
@@ -73,6 +81,20 @@ export async function fetchNfce(input: string): Promise<ParsedReceipt> {
   }
 
   if (!parsed.items.length) {
+    // Deixa rastro nos logs da Vercel para entender portais que ainda não lemos
+    console.warn("[nfce] página sem itens", {
+      url: `${url.hostname}${url.pathname}`,
+      bytes: html.length,
+      title: html.match(/<title[^>]*>([^<]*)/i)?.[1]?.trim(),
+      text: visibleText(html).slice(0, 400),
+    });
+    if (/Request Rejected/i.test(html)) {
+      throw new NfceError("blocked", "O portal da SEFAZ bloqueou a consulta automática agora. Tente de novo em alguns segundos.", 502);
+    }
+    const portalMessage = portalErrorMessage(html);
+    if (portalMessage) {
+      throw new NfceError("sefaz_message", `A SEFAZ respondeu: ${portalMessage}`, 422);
+    }
     if (/captcha/i.test(html)) {
       throw new NfceError("captcha", "O portal desse estado pediu uma verificação (captcha) e não deixou ler a nota automaticamente.", 422);
     }
