@@ -1,3 +1,5 @@
+import http from "node:http";
+import https from "node:https";
 import type { ParsedReceipt } from "../types";
 import { findInnerDocumentUrl, parseNfceHtml, portalErrorMessage, visibleText } from "./parse";
 import { NfceError, accessKeyFromUrl, formatCnpj, infoFromAccessKey, isAllowedUrl, parseQrInput } from "./url";
@@ -5,18 +7,17 @@ import { NfceError, accessKeyFromUrl, formatCnpj, infoFromAccessKey, isAllowedUr
 const USER_AGENT =
   "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1";
 
-function decode(buffer: ArrayBuffer, contentType: string | null) {
-  const head = new TextDecoder("latin1").decode(buffer.slice(0, 2048));
+function decode(body: Uint8Array, contentType: string | undefined) {
+  const head = new TextDecoder("latin1").decode(body.subarray(0, 2048));
   const charset =
     contentType?.match(/charset=([\w-]+)/i)?.[1] ?? head.match(/<meta[^>]+charset=["']?([\w-]+)/i)?.[1] ?? "utf-8";
   try {
-    return new TextDecoder(charset.toLowerCase()).decode(buffer);
+    return new TextDecoder(charset.toLowerCase()).decode(body);
   } catch {
-    return new TextDecoder("utf-8").decode(buffer);
+    return new TextDecoder("utf-8").decode(body);
   }
 }
 
-/** fetch que segue redirecionamentos guardando cookies (alguns portais exigem sessão). */
 /**
  * O "|" do parâmetro p= vai codificado (%7C), como o próprio portal faz no formulário.
  * Sem isso o firewall da SEFAZ-SP às vezes responde "Request Rejected".
@@ -25,22 +26,45 @@ function requestUrl(url: URL) {
   return url.href.replace(/\|/g, "%7C");
 }
 
+const MAX_BYTES = 5_000_000;
+
+/**
+ * GET com node:https em vez de fetch: o fetch do Node manda os nomes dos cabeçalhos em
+ * minúsculas ("accept-language"), e o firewall da SEFAZ-SP rejeita isso como robô.
+ * Aqui eles vão como num navegador ("Accept-Language").
+ */
+function get(url: URL, headers: Record<string, string>) {
+  const lib = url.protocol === "http:" ? http : https;
+  return new Promise<{ status: number; headers: http.IncomingHttpHeaders; body: Buffer }>((resolve, reject) => {
+    const req = lib.request(requestUrl(url), { method: "GET", headers, timeout: 15_000 }, (res) => {
+      const chunks: Buffer[] = [];
+      let size = 0;
+      res.on("data", (chunk: Buffer) => {
+        size += chunk.length;
+        if (size > MAX_BYTES) req.destroy(new Error("Página grande demais"));
+        else chunks.push(chunk);
+      });
+      res.on("end", () => resolve({ status: res.statusCode ?? 0, headers: res.headers, body: Buffer.concat(chunks) }));
+      res.on("error", reject);
+    });
+    req.on("timeout", () => req.destroy(Object.assign(new Error("timeout"), { name: "TimeoutError" })));
+    req.on("error", reject);
+    req.end();
+  });
+}
+
+/** Segue redirecionamentos guardando cookies (alguns portais exigem sessão). */
 async function fetchHtml(start: URL, jar: Map<string, string>) {
   let url = start;
   for (let hop = 0; hop < 6; hop++) {
     if (!isAllowedUrl(url)) throw new NfceError("host", "O portal redirecionou para um endereço não permitido.", 502);
-    let res: Response;
+    let res: Awaited<ReturnType<typeof get>>;
     try {
-      res = await fetch(requestUrl(url), {
-        redirect: "manual",
-        cache: "no-store",
-        signal: AbortSignal.timeout(15_000),
-        headers: {
-          "User-Agent": USER_AGENT,
-          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-          "Accept-Language": "pt-BR,pt;q=0.9",
-          ...(jar.size ? { Cookie: [...jar].map(([k, v]) => `${k}=${v}`).join("; ") } : {}),
-        },
+      res = await get(url, {
+        "User-Agent": USER_AGENT,
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "pt-BR,pt;q=0.9",
+        ...(jar.size ? { Cookie: [...jar].map(([k, v]) => `${k}=${v}`).join("; ") } : {}),
       });
     } catch (err) {
       const timeout = err instanceof Error && err.name === "TimeoutError";
@@ -50,18 +74,20 @@ async function fetchHtml(start: URL, jar: Map<string, string>) {
         504,
       );
     }
-    for (const cookie of res.headers.getSetCookie?.() ?? []) {
+    for (const cookie of res.headers["set-cookie"] ?? []) {
       const pair = cookie.split(";")[0];
       const i = pair.indexOf("=");
       if (i > 0) jar.set(pair.slice(0, i).trim(), pair.slice(i + 1).trim());
     }
-    const location = res.headers.get("location");
+    const location = res.headers.location;
     if (res.status >= 300 && res.status < 400 && location) {
       url = new URL(location, url);
       continue;
     }
-    if (!res.ok) throw new NfceError("sefaz_http", `O portal da SEFAZ respondeu com erro (${res.status}).`, 502);
-    return { html: decode(await res.arrayBuffer(), res.headers.get("content-type")), url };
+    if (res.status < 200 || res.status >= 300) {
+      throw new NfceError("sefaz_http", `O portal da SEFAZ respondeu com erro (${res.status}).`, 502);
+    }
+    return { html: decode(res.body, res.headers["content-type"]), url };
   }
   throw new NfceError("redirects", "O portal da SEFAZ redirecionou vezes demais.", 502);
 }
