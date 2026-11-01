@@ -40,14 +40,16 @@ npm test         # testes do leitor de nota e das comparações
 A câmera só funciona em `https` ou `localhost`. Para testar no celular, faça o deploy (abaixo)
 ou use um túnel https.
 
-## Subir na Vercel
+## Publicação
 
-1. Crie um repositório no GitHub com esta pasta.
-2. Em [vercel.com/new](https://vercel.com/new), importe o repositório (detecta Next.js sozinho, sem variáveis de ambiente).
-3. O `vercel.json` já fixa as funções na região **São Paulo (gru1)** — vários portais da SEFAZ
-   bloqueiam acessos de fora do Brasil.
+No ar em **https://cesta-sigma.vercel.app**. O projeto da Vercel está ligado a este repositório:
+cada push no `main` publica em produção sozinho, e pull requests ganham um link de prévia.
 
-Ou pela linha de comando: `npx vercel` e depois `npx vercel --prod`.
+O `vercel.json` fixa as funções na região **São Paulo (gru1)** — vários portais da SEFAZ
+bloqueiam acessos de fora do Brasil.
+
+Para subir uma cópia sua: importe o repositório em [vercel.com/new](https://vercel.com/new)
+(detecta Next.js sozinho, sem variáveis de ambiente).
 
 No iPhone: abra o link no Safari → Compartilhar → **Adicionar à Tela de Início**.
 
